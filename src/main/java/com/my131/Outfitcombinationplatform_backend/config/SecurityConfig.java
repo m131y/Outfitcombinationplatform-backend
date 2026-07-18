@@ -1,5 +1,8 @@
 package com.my131.Outfitcombinationplatform_backend.config;
 
+import com.my131.Outfitcombinationplatform_backend.domain.user.security.JwtAuthFilter;
+import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -10,21 +13,29 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+
+import java.util.List;
 
 @Configuration
 @EnableWebSecurity
+@RequiredArgsConstructor
 public class SecurityConfig {
+    private final JwtAuthFilter jwtAuthFilter;
+
+    @Value("${frontend.url}")
+    private String frontendUrl;
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+
                 // CSRF 비활성화 (REST API + H2 콘솔)
                 .csrf(csrf -> csrf.disable())
-
-                // H2 콘솔 iframe 허용
-                .headers(headers -> headers
-                        .frameOptions(frame -> frame.disable())
-                )
 
                 // 세션 사용 안 함 (JWT 방식 대비)
                 .sessionManagement(session -> session
@@ -33,8 +44,6 @@ public class SecurityConfig {
 
                 // 요청 권한 설정
                 .authorizeHttpRequests(auth -> auth
-                                // H2 콘솔
-                                .requestMatchers("/h2-console/**").permitAll()
 
                                 // 인증 관련 엔드포인트 (나중에 만들 것들)
                                 .requestMatchers("/api/auth/**").permitAll()
@@ -50,7 +59,7 @@ public class SecurityConfig {
                                 .anyRequest().permitAll()
                         // ↑ 나중에 인증 적용할 때 아래로 교체
                         // .anyRequest().authenticated()
-                );
+                )
 
         // OAuth2 로그인 (나중에 활성화)
         // .oauth2Login(oauth2 -> oauth2
@@ -59,7 +68,7 @@ public class SecurityConfig {
         // )
 
         // JWT 필터 (나중에 추가)
-        // .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
+        .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
@@ -75,5 +84,19 @@ public class SecurityConfig {
     public AuthenticationManager authenticationManager(
             AuthenticationConfiguration config) throws Exception {
         return config.getAuthenticationManager();
+    }
+
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration config = new CorsConfiguration();
+        config.setAllowedOrigins(List.of(frontendUrl));   // @Value로 주입
+        config.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
+        config.setAllowedHeaders(List.of("*"));
+        config.setAllowCredentials(true);
+        config.setMaxAge(3600L);
+
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/api/**", config);
+        return source;
     }
 }

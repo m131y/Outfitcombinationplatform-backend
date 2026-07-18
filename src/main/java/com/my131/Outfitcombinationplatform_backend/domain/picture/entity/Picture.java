@@ -25,8 +25,8 @@ public class Picture extends BaseTimeEntity {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "uploader_id", nullable = false)
-    private User uploader;
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;
 
     private String description;
 

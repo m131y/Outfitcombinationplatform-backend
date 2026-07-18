@@ -1,30 +1,29 @@
 package com.my131.Outfitcombinationplatform_backend.domain.user.entity;
 
+
 import com.my131.Outfitcombinationplatform_backend.domain.closet.entity.Closet;
+import com.my131.Outfitcombinationplatform_backend.domain.clothing.entity.ClothingItem;
+import com.my131.Outfitcombinationplatform_backend.domain.picture.entity.Picture;
 import com.my131.Outfitcombinationplatform_backend.domain.post.entity.Post;
 import com.my131.Outfitcombinationplatform_backend.domain.social.entity.Like;
 import com.my131.Outfitcombinationplatform_backend.global.common.BaseTimeEntity;
 import com.my131.Outfitcombinationplatform_backend.global.enums.AuthProvider;
-import jakarta.persistence.*;
+import jakarta.persistence.*;          // ✅ @Id, @Column, @Entity 등 전부 여기서
 import lombok.*;
-import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.UpdateTimestamp;
-import org.springframework.core.annotation.MergedAnnotations;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
 import java.util.*;
 
 @Entity
 @Table(name = "users")
 @Getter
 @Setter
-@Builder
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
 public class User extends BaseTimeEntity implements UserDetails {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -36,10 +35,9 @@ public class User extends BaseTimeEntity implements UserDetails {
     @Column(unique = true, nullable = false)
     private String email;
 
-    @Column(nullable = false)
     private String password;
 
-    @Column(name = "nickname")
+    @Column(name = "nickname", nullable = false)
     private String nickname;
 
     private String bio;
@@ -48,30 +46,26 @@ public class User extends BaseTimeEntity implements UserDetails {
     private String profileImageUrl;
 
     @Enumerated(EnumType.STRING)
-    private AuthProvider provider;
+    private AuthProvider authProvider;
 
     private String providerId;
 
-    @Column(nullable = false)
-    @Builder.Default
-    private BigDecimal totalPoints = BigDecimal.ZERO; // 판매자에게 정산된 총 적립금
-
-    @CreationTimestamp
-    @Column(name = "created_at", updatable = false)
-    private LocalDateTime createdAt;
-
-    @UpdateTimestamp
-    @Column(name = "updated_at")
-    private LocalDateTime updatedAt;
-
     private boolean enabled;
 
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
     @Builder.Default
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
     private List<Post> posts = new ArrayList<>();
 
-    @OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
     @Builder.Default
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
+    private List<Picture> pictures = new ArrayList<>();
+
+    @Builder.Default
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
+    private List<ClothingItem> clothingItems = new ArrayList<>();
+
+    @Builder.Default
+    @OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
     private Set<Like> likes = new HashSet<>();
 
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
@@ -89,7 +83,32 @@ public class User extends BaseTimeEntity implements UserDetails {
         return List.of(new SimpleGrantedAuthority("ROLE_USER"));
     }
 
-    public void addPoints(BigDecimal amount) {
-        this.totalPoints = this.totalPoints.add(amount);
+    @Override
+    public String getUsername() {
+        return email;
+    }
+
+    public String getRealUsername() {
+        return username;
+    }
+
+    @Override
+    public boolean isAccountNonExpired() { return true; }
+
+    @Override
+    public boolean isAccountNonLocked() { return true; }
+
+    @Override
+    public boolean isCredentialsNonExpired() { return true; }
+
+    @Override
+    public boolean isEnabled() { return true; }
+
+    @Builder
+    public User(String email, String password, String nickname, AuthProvider authProvider) {
+        this.email = email;
+        this.password = password;
+        this.nickname = nickname;
+        this.authProvider = authProvider;
     }
 }

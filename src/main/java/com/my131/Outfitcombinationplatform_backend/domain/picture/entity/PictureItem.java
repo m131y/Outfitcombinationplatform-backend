@@ -21,4 +21,11 @@ public class PictureItem {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "clothing_item_id")
     private ClothingItem clothingItem;
+
+    public static PictureItem of(Picture picture, ClothingItem clothingItem) {
+        PictureItem pi = new PictureItem();
+        pi.picture = picture;
+        pi.clothingItem = clothingItem;
+        return pi;
+    }
 }

@@ -1,0 +1,34 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5433/outfitdb
+    username: outfit
+    password: outfit1234
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    show-sql: true
+
+jwt:
+  secret: "dev-secret-key-must-be-at-least-32-characters-long"
+  expiration: 86400000
+  refresh-expiration: 604800000
+
+aws:
+  access-key-id: ${AWS_ACCESS_KEY_ID}
+  secret-access-key: ${AWS_SECRET_ACCESS_KEY}
+  region: ap-northeast-2
+  s3:
+    bucket-name: ${AWS_BUCKET_NAME}
+
+storage:
+  local:
+    base-path: uploads
+    base-url: http://localhost:8080/uploads
+
+openai:
+  keys:
+    default: ${OPENAI_API_KEY}
+    chat: ${OPENAI_API_KEY_CHAT}
+
+frontend:
+  url: http://localhost:3000
